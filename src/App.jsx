@@ -17,17 +17,22 @@ function App() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('contacts');
-      if (stored) setContacts(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setContacts(parsed);
+        console.log('Loaded contacts from storage:', parsed);
+      }
     } catch (e) {
-      // ignore parse errors
+      console.error('Error loading contacts:', e);
     }
   }, []);
 
   useEffect(() => {
     try {
       localStorage.setItem('contacts', JSON.stringify(contacts));
+      console.log('Saved contacts to storage:', contacts);
     } catch (e) {
-      // ignore storage errors
+      console.error('Error saving contacts:', e);
     }
   }, [contacts]);
 
@@ -163,7 +168,12 @@ function App() {
       email: email.trim(),
     };
 
-    setContacts((current) => [newContact, ...current]);
+    console.log('Adding contact:', newContact);
+    setContacts((current) => {
+      const updated = [newContact, ...current];
+      console.log('Updated contacts:', updated);
+      return updated;
+    });
     setContactForm({ name: '', phone: '', email: '' });
     setError('');
   };
@@ -171,6 +181,7 @@ function App() {
   const removeContact = (id) => setContacts((current) => current.filter((contact) => contact.id !== id));
 
   const exportContactsPDF = () => {
+    console.log('Exporting contacts, count:', contacts.length);
     if (!contacts.length) {
       setError('No contacts to export.');
       return;
@@ -314,7 +325,7 @@ function App() {
           <aside className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/90 p-6">
             <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4 text-slate-300">
               <h2 className="text-lg font-semibold text-white">Contacts</h2>
-              <p className="mt-2 text-sm text-slate-400">Add and manage contacts. Contacts are saved locally in your browser.</p>
+              <p className="mt-2 text-sm text-slate-400">Add and manage contacts. Contacts are saved locally in your browser. ({contacts.length} saved)</p>
               <div className="mt-4 grid gap-2">
                 <input
                   placeholder="Name"
@@ -342,13 +353,15 @@ function App() {
                   >
                     Add contact
                   </button>
-                  <button
-                    type="button"
-                    onClick={exportContactsPDF}
-                    className="inline-flex items-center justify-center rounded-3xl border border-slate-700 bg-slate-950/90 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900"
-                  >
-                    <Download className="mr-2 h-4 w-4" /> Export PDF
-                  </button>
+                  {contacts.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={exportContactsPDF}
+                      className="inline-flex items-center justify-center rounded-3xl border border-slate-700 bg-slate-950/90 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900"
+                    >
+                      <Download className="mr-2 h-4 w-4" /> Export PDF
+                    </button>
+                  )}
                 </div>
               </div>
               {contacts.length > 0 && (
