@@ -782,8 +782,52 @@ export default function App() {
     });
 
     const fileName = `contacts-${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fileName);
-    setStatus("Contacts exported to PDF");
+
+    // Mobile browsers (especially iOS Safari) block jsPDF's default
+    // anchor-based download, so it silently does nothing. Generate a Blob
+    // and use the Web Share API first, then fall back to opening in a new
+    // tab, and finally to the classic download for desktop.
+    try {
+      const blob = doc.output("blob");
+      const file = new File([blob], fileName, { type: "application/pdf" });
+
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        navigator
+          .share({ files: [file], title: "Contact Directory" })
+          .then(() => setStatus("Contacts shared"))
+          .catch(() => setStatus("Export cancelled"));
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // On mobile the download attribute is often ignored, so also open the
+      // PDF so the user can save it manually via the browser viewer.
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(
+        typeof navigator !== "undefined" ? navigator.userAgent : ""
+      );
+      if (isMobile) {
+        window.open(url, "_blank");
+      }
+
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      setStatus("Contacts exported to PDF");
+    } catch (err) {
+      console.log("[v0] PDF export failed:", err.message);
+      // Last-resort fallback to jsPDF's built-in save.
+      doc.save(fileName);
+      setStatus("Contacts exported to PDF");
+    }
   };
 
   // Function to start editing a contact
