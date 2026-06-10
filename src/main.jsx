@@ -60,6 +60,17 @@ if (rootElement) {
 
 // Register service worker for Android PWA support
 if ('serviceWorker' in navigator) {
+  // When a new service worker takes control, reload once so the page runs
+  // the latest JavaScript instead of the old cached bundle. This is what
+  // makes new features (like the contacts PDF export) actually appear on
+  // installed PWAs without a manual hard refresh.
+  let hasReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hasReloaded) return;
+    hasReloaded = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', async () => {
     try {
       // Unregister old service workers first to ensure clean state
@@ -69,11 +80,29 @@ if ('serviceWorker' in navigator) {
           await registration.unregister();
         }
       }
-      
+
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       });
       console.log('SW registered:', registration.scope);
+
+      // Force an immediate update check so a newly deployed service worker
+      // is fetched and activated right away rather than on the next visit.
+      registration.update();
+
+      // If an updated worker is found, activate it as soon as it is installed.
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+
+      // Periodically check for updates while the app stays open.
+      setInterval(() => registration.update(), 60 * 1000);
     } catch (error) {
       console.log('SW registration failed:', error);
     }
