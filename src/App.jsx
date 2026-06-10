@@ -671,6 +671,103 @@ export default function App() {
     setStatus("Contact deleted");
   };
 
+  // Function to export all contacts to a PDF file
+  const exportContactsToPDF = () => {
+    if (contacts.length === 0) {
+      setStatus("No contacts to export");
+      return;
+    }
+    setStatus("Generating contacts PDF...");
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const marginX = 48;
+    const marginBottom = 56;
+    let y = 56;
+
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(11, 58, 91); // #0B3A5B
+    doc.text("Contact Directory", marginX, y);
+    y += 20;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(108, 125, 138); // #6C7D8A
+    doc.text(`Exported ${new Date().toLocaleString()}`, marginX, y);
+    y += 14;
+    doc.setDrawColor(11, 58, 91);
+    doc.setLineWidth(1);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 24;
+
+    const ensureSpace = (needed) => {
+      if (y + needed > pageHeight - marginBottom) {
+        doc.addPage();
+        y = 56;
+      }
+    };
+
+    contacts.forEach((contact) => {
+      // Estimate block height
+      let lines = 1;
+      if (contact.organization) lines++;
+      if (contact.contactPerson) lines++;
+      if (contact.notes) lines++;
+      if (contact.phone) lines++;
+      if (contact.email) lines++;
+      ensureSpace(lines * 15 + 16);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(11, 58, 91);
+      doc.text(contact.title || "Untitled", marginX, y);
+      y += 16;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+
+      if (contact.organization) {
+        doc.setTextColor(108, 125, 138);
+        doc.text(contact.organization, marginX, y);
+        y += 14;
+      }
+      if (contact.contactPerson) {
+        doc.setTextColor(79, 100, 117); // #4F6475
+        doc.text(contact.contactPerson, marginX, y);
+        y += 14;
+      }
+      if (contact.notes) {
+        doc.setTextColor(108, 125, 138);
+        doc.setFont("helvetica", "italic");
+        const noteLines = doc.splitTextToSize(contact.notes, pageWidth - marginX * 2);
+        doc.text(noteLines, marginX, y);
+        y += 14 * noteLines.length;
+        doc.setFont("helvetica", "normal");
+      }
+      if (contact.phone) {
+        doc.setTextColor(79, 100, 117);
+        doc.text(`Phone: ${contact.phone}`, marginX, y);
+        y += 14;
+      }
+      if (contact.email) {
+        doc.setTextColor(11, 58, 91);
+        doc.text(`Email: ${contact.email}`, marginX, y);
+        y += 14;
+      }
+
+      y += 10;
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(marginX, y, pageWidth - marginX, y);
+      y += 16;
+    });
+
+    const fileName = `contacts-${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+    setStatus("Contacts exported to PDF");
+  };
+
   // Function to start editing a contact
   const startEditContact = (contact) => {
     setEditingContact(contact);
@@ -1734,9 +1831,18 @@ export default function App() {
             {activeTab === "contact" ? (
               <div className="space-y-3">
                 <div className="rounded-2xl border bg-white p-4">
-                  <h3 className="text-sm font-semibold text-[#0B3A5B] mb-3 flex items-center gap-2">
-                    <Phone className="h-4 w-4" />Contact Directory
-                  </h3>
+                  <div className="flex items-center justify-between mb-3 gap-2">
+                    <h3 className="text-sm font-semibold text-[#0B3A5B] flex items-center gap-2">
+                      <Phone className="h-4 w-4" />Contact Directory
+                    </h3>
+                    <button
+                      onClick={exportContactsToPDF}
+                      className="flex items-center gap-1.5 bg-[#0B3A5B] text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#0B3A5B]/90 transition-colors flex-shrink-0"
+                      title="Export contacts to PDF"
+                    >
+                      <Download className="h-3.5 w-3.5" />Export PDF
+                    </button>
+                  </div>
                   <p className="text-xs text-[#6C7D8A] mb-4">
                     Tap phone numbers to call or email addresses to send an email.
                   </p>

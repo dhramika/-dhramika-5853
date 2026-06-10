@@ -2,7 +2,51 @@
   "hash": "a1ffd30f",
   "configHash": "9881e54d",
   "lockfileHash": "69de93d0",
-  "browserHash": "d6acf544",
-  "optimized": {},
-  "chunks": {}
+  "browserHash": "cb60028e",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/.pnpm/react@18.3.1/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "b0f781aa",
+      "needsInterop": true
+    },
+    "jspdf": {
+      "src": "../../node_modules/.pnpm/jspdf@2.5.2/node_modules/jspdf/dist/jspdf.es.min.js",
+      "file": "jspdf.js",
+      "fileHash": "3bd878a3",
+      "needsInterop": false
+    },
+    "qrcode.react": {
+      "src": "../../node_modules/.pnpm/qrcode.react@4.2.0_react@18.3.1/node_modules/qrcode.react/lib/esm/index.js",
+      "file": "qrcode__react.js",
+      "fileHash": "96c6735b",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/.pnpm/lucide-react@0.511.0_react@18.3.1/node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "8e539213",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-OELA7GPI": {
+      "file": "chunk-OELA7GPI.js"
+    },
+    "html2canvas.esm-PYRPZQPL": {
+      "file": "html2canvas__esm-PYRPZQPL.js"
+    },
+    "purify.es-BVLWQQZV": {
+      "file": "purify__es-BVLWQQZV.js"
+    },
+    "index.es-HHHTO2SV": {
+      "file": "index__es-HHHTO2SV.js"
+    },
+    "chunk-EEPF6S3Z": {
+      "file": "chunk-EEPF6S3Z.js"
+    },
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
+    }
+  }
 }
