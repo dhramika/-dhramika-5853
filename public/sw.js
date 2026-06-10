@@ -1,8 +1,15 @@
-const CACHE_NAME = 'pasco-photo-app-v4';
+const CACHE_NAME = 'pasco-photo-app-v5';
 
 // Install event - skip waiting to activate immediately
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+});
+
+// Allow the page to tell a waiting worker to activate immediately.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activate event - claim clients and clean up old caches
