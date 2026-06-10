@@ -35,11 +35,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Only handle same-origin requests. Never cache third-party/cross-origin
+  // responses, which could otherwise poison the cache with opaque or
+  // attacker-controlled content.
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone and cache successful responses
-        if (response && response.status === 200) {
+        // Clone and cache successful, non-opaque, basic responses only.
+        if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

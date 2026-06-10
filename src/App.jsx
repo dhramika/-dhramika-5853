@@ -85,8 +85,26 @@ function toDataUrl(file) {
 }
 
 function safeJsonParse(value, fallback) {
+  if (value === null || value === undefined) return fallback;
   try {
-    return JSON.parse(value);
+    const parsed = JSON.parse(value);
+    // Integrity check: reject data whose shape doesn't match the expected
+    // fallback type. Protects against corrupted or tampered storage entries
+    // (e.g. a non-array where an array is expected) crashing the app.
+    if (Array.isArray(fallback) && !Array.isArray(parsed)) {
+      console.warn('[v0] Discarded stored value: expected array, got', typeof parsed);
+      return fallback;
+    }
+    if (
+      fallback !== null &&
+      typeof fallback === 'object' &&
+      !Array.isArray(fallback) &&
+      (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed))
+    ) {
+      console.warn('[v0] Discarded stored value: expected object, got', typeof parsed);
+      return fallback;
+    }
+    return parsed;
   } catch {
     return fallback;
   }
