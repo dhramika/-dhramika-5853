@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pasco-photo-app-v2';
+const CACHE_NAME = 'pasco-photo-app-v3';
 
 // Install event - skip waiting to activate immediately
 self.addEventListener('install', (event) => {
