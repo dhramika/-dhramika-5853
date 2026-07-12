@@ -306,7 +306,6 @@ function downloadFile(name, content, type) {
 }
 
 async function stampImage(src, overlay) {
-  // Return the original image without any stamp overlay
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
@@ -320,6 +319,41 @@ async function stampImage(src, overlay) {
       }
 
       ctx.drawImage(img, 0, 0);
+
+      // Draw the stamp overlay only when enabled in settings.
+      if (overlay && overlay.stampEnabled) {
+        // Build the lines of text to display, skipping empty values.
+        const lines = [];
+        if (overlay.officer) lines.push(`Officer: ${overlay.officer}`);
+        const dateTime = [overlay.date, overlay.time].filter(Boolean).join("  ");
+        if (dateTime) lines.push(dateTime);
+        if (overlay.gps) lines.push(`GPS: ${overlay.gps}`);
+
+        if (lines.length > 0) {
+          // Scale text relative to image size so it stays legible.
+          const fontSize = Math.max(16, Math.round(canvas.width * 0.028));
+          const lineHeight = Math.round(fontSize * 1.35);
+          const padding = Math.round(fontSize * 0.6);
+          const bandHeight = lineHeight * lines.length + padding * 2;
+
+          // Semi-transparent dark band across the bottom for contrast.
+          ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+          ctx.fillRect(0, canvas.height - bandHeight, canvas.width, bandHeight);
+
+          ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+          ctx.fillStyle = "#FFFFFF";
+          ctx.textBaseline = "top";
+          ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+          ctx.shadowBlur = 4;
+
+          let y = canvas.height - bandHeight + padding;
+          for (const line of lines) {
+            ctx.fillText(line, padding, y);
+            y += lineHeight;
+          }
+          ctx.shadowBlur = 0;
+        }
+      }
 
       // Use standard quality for balanced file size and clarity
       resolve(canvas.toDataURL("image/jpeg", 0.80));
@@ -494,6 +528,7 @@ export default function App() {
   const [settings, setSettings] = useState({
     officerDefault: "",
     tenantLabel: "Pasco County Code Compliance",
+    stampEnabled: false,
   });
 
   const totals = useMemo(() => ({ photoCount: photos.length }), [photos]);
@@ -1087,6 +1122,7 @@ export default function App() {
       date: meta.date,
       time: meta.time,
       gps: currentGps,
+      stampEnabled: settings.stampEnabled,
     });
     
     const newPhoto = {
@@ -1153,6 +1189,7 @@ export default function App() {
         date: meta.date,
         time: meta.time,
         gps: currentGps,
+        stampEnabled: settings.stampEnabled,
       });
       
       const newPhoto = {
@@ -1227,6 +1264,7 @@ export default function App() {
           date: meta.date,
           time: meta.time,
           gps: currentGps,
+          stampEnabled: settings.stampEnabled,
         });
         
         const newPhoto = {
@@ -1859,6 +1897,30 @@ export default function App() {
                         value={settings.officerDefault}
                         onChange={(e) => setSettings((prev) => ({ ...prev, officerDefault: e.target.value }))}
                       />
+                    </div>
+                    <div className="flex items-start justify-between gap-3 rounded-xl border bg-[#FAF8F2] p-3">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-[#0B3A5B]">Photo Stamp</div>
+                        <p className="mt-0.5 text-xs text-[#6C7D8A]">
+                          When on, photos are stamped with the officer name, date, time, and GPS location.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={settings.stampEnabled}
+                        aria-label="Toggle photo stamp"
+                        onClick={() => setSettings((prev) => ({ ...prev, stampEnabled: !prev.stampEnabled }))}
+                        className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                          settings.stampEnabled ? "bg-[#0B3A5B]" : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                            settings.stampEnabled ? "translate-x-5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
                     </div>
                     <Button className="w-full" onClick={saveSettings}>
                       <Save className="mr-2 h-4 w-4" />Save Settings
