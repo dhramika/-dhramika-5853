@@ -580,10 +580,16 @@ export default function App() {
         setSavedPdfs(loadedPdfs);
       }
       
-      // Load contacts from storage (merges with defaults)
-      const loadedContacts = safeJsonParse(safeStorage.getItem(CONTACTS_KEY), []);
-      if (loadedContacts && loadedContacts.length > 0) {
-        setContacts(loadedContacts);
+      // Load contacts from shared Neon storage so every device sees the same directory.
+      try {
+        const response = await fetch("/api/contacts", { cache: "no-store" });
+        if (!response.ok) throw new Error("Unable to load shared contacts");
+        const sharedContacts = await response.json();
+        setContacts(Array.isArray(sharedContacts) ? sharedContacts : defaultContacts);
+      } catch (error) {
+        console.log("[v0] Shared contacts unavailable, using local contacts:", error.message);
+        const loadedContacts = safeJsonParse(safeStorage.getItem(CONTACTS_KEY), []);
+        if (loadedContacts.length > 0) setContacts(loadedContacts);
       }
     };
     
@@ -686,15 +692,13 @@ export default function App() {
     }
   }, [savedPdfs]);
 
-  // Auto-save contacts whenever they change
+  // Keep a local fallback copy, while Neon remains the shared source of truth.
   useEffect(() => {
-    if (contacts.length > 0) {
-      safeStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
-    }
+    if (contacts.length > 0) safeStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
   }, [contacts]);
 
   // Function to add a new contact
-  const addContact = () => {
+  const addContact = async () => {
     if (!newContact.title.trim()) {
       setStatus("Please enter a title for the contact");
       return;
@@ -705,7 +709,20 @@ export default function App() {
       createdAt: new Date().toISOString(),
       isDefault: false
     };
-    setContacts((prev) => [...prev, contact]);
+    try {
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      });
+      if (!response.ok) throw new Error("Unable to save contact");
+      const savedContact = await response.json();
+      setContacts((prev) => [...prev, savedContact]);
+    } catch (error) {
+      console.log("[v0] Shared contact save failed:", error.message);
+      setStatus("Unable to save contact to shared directory");
+      return;
+    }
     setNewContact({
       title: "",
       organization: "",
@@ -719,9 +736,16 @@ export default function App() {
   };
 
   // Function to delete a contact
-  const deleteContact = (id) => {
-    setContacts((prev) => prev.filter((c) => c.id !== id));
-    setStatus("Contact deleted");
+  const deleteContact = async (id) => {
+    try {
+      const response = await fetch(`/api/contacts?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Unable to delete contact");
+      setContacts((prev) => prev.filter((c) => c.id !== id));
+      setStatus("Contact deleted");
+    } catch (error) {
+      console.log("[v0] Shared contact delete failed:", error.message);
+      setStatus("Unable to delete contact from shared directory");
+    }
   };
 
   // Function to export all contacts to a PDF file
@@ -880,18 +904,25 @@ export default function App() {
   };
 
   // Function to save edited contact
-  const saveEditedContact = () => {
+  const saveEditedContact = async () => {
     if (!newContact.title.trim()) {
       setStatus("Please enter a title for the contact");
       return;
     }
-    setContacts((prev) =>
-      prev.map((c) =>
-        c.id === editingContact.id
-          ? { ...c, ...newContact, updatedAt: new Date().toISOString() }
-          : c
-      )
-    );
+    try {
+      const response = await fetch("/api/contacts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingContact.id, ...newContact }),
+      });
+      if (!response.ok) throw new Error("Unable to update contact");
+      const savedContact = await response.json();
+      setContacts((prev) => prev.map((c) => c.id === editingContact.id ? savedContact : c));
+    } catch (error) {
+      console.log("[v0] Shared contact update failed:", error.message);
+      setStatus("Unable to update contact in shared directory");
+      return;
+    }
     setEditingContact(null);
     setNewContact({
       title: "",
