@@ -84,6 +84,31 @@ function toDataUrl(file) {
   });
 }
 
+// Normalize gallery images before storing or adding them to a PDF. Large
+// phone originals can exceed mobile memory limits when many are added at once.
+async function optimizeImageForStorage(file) {
+  const source = await toDataUrl(file);
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const maxDimension = 2200;
+      const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas not available."));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.84));
+    };
+    img.onerror = () => reject(new Error("This image format is not supported by the browser."));
+    img.src = source;
+  });
+}
+
 function safeJsonParse(value, fallback) {
   if (value === null || value === undefined) return fallback;
   try {
@@ -1207,7 +1232,7 @@ export default function App() {
     setStatus("Processing photo...");
     
     try {
-      const imageDataUrl = await toDataUrl(file);
+      const imageDataUrl = await optimizeImageForStorage(file);
       const meta = formatDateTime(new Date());
       const currentGps = gps;
       
@@ -1285,7 +1310,7 @@ export default function App() {
       setStatus(`Processing photo ${i + 1} of ${files.length}...`);
       
       try {
-        const imageDataUrl = await toDataUrl(file);
+        const imageDataUrl = await optimizeImageForStorage(file);
         const meta = formatDateTime(new Date());
         const currentGps = gps;
         
