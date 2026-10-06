@@ -1386,7 +1386,7 @@ export default function App() {
       setStatus(`Creating PDF group ${batchNumber} of ${Math.ceil(sortedPhotos.length / batchSize)}...`);
       const blob = await createCasePdfBlob({
         officer,
-        gps: currentGps,
+        gps,
         photos: batch,
         caseNumber,
       });
