@@ -1374,6 +1374,34 @@ export default function App() {
     return new Blob([u8arr], { type: mime });
   };
 
+  // Build separate PDF files for large photo sets so mobile browsers do not
+  // run out of memory while creating or sharing one very large document.
+  const createPhotoPackBatchFiles = async (sortedPhotos, fileBase, dateStr, timeStr) => {
+    const batchSize = 50;
+    const files = [];
+
+    for (let start = 0; start < sortedPhotos.length; start += batchSize) {
+      const batch = sortedPhotos.slice(start, start + batchSize);
+      const batchNumber = Math.floor(start / batchSize) + 1;
+      setStatus(`Creating PDF group ${batchNumber} of ${Math.ceil(sortedPhotos.length / batchSize)}...`);
+      const blob = await createCasePdfBlob({
+        officer,
+        gps: currentGps,
+        photos: batch,
+        caseNumber,
+      });
+      files.push(
+        new File(
+          [blob],
+          `${fileBase}_${dateStr}_${timeStr}_group-${batchNumber}.pdf`,
+          { type: "application/pdf" }
+        )
+      );
+    }
+
+    return files;
+  };
+
   // Save Photo Pack by Date and Time - saves PDF to phone gallery
   const savePhotoPackByDateTime = async () => {
     if (photos.length === 0) {
@@ -1400,6 +1428,31 @@ export default function App() {
       }).replace(/:/g, '-'); // HH-MM-SS
       const fileBase = caseNumber || "PhotoPack";
       const pdfFileName = `${fileBase}_${dateStr}_${timeStr}.pdf`;
+
+      // Split large exports into groups of 50. This keeps memory usage bounded
+      // on phones and produces multiple shareable PDFs when needed.
+      if (sortedPhotos.length > 50) {
+        const batchFiles = await createPhotoPackBatchFiles(sortedPhotos, fileBase, dateStr, timeStr);
+        const canShareBatches = navigator.share && navigator.canShare && navigator.canShare({ files: batchFiles });
+
+        if (canShareBatches) {
+          await navigator.share({
+            files: batchFiles,
+            title: `${fileBase} photo groups`,
+            text: `${sortedPhotos.length} photos in groups of 50`,
+          });
+          setStatus(`${sortedPhotos.length} photos shared in ${batchFiles.length} PDF groups.`);
+        } else {
+          // Desktop and browsers without multi-file sharing get one download
+          // per group, with a short delay so each download is registered.
+          batchFiles.forEach((file, index) => {
+            setTimeout(() => downloadFile(file.name, file, "application/pdf"), index * 350);
+          });
+          setStatus(`${sortedPhotos.length} photos downloaded in ${batchFiles.length} PDF groups.`);
+        }
+        addPhotosToGallery(sortedPhotos);
+        return;
+      }
       
       setStatus("Creating PDF sorted by date/time...");
       
