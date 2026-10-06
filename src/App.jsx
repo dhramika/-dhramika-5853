@@ -1433,23 +1433,14 @@ export default function App() {
       // on phones and produces multiple shareable PDFs when needed.
       if (sortedPhotos.length > 50) {
         const batchFiles = await createPhotoPackBatchFiles(sortedPhotos, fileBase, dateStr, timeStr);
-        const canShareBatches = navigator.share && navigator.canShare && navigator.canShare({ files: batchFiles });
-
-        if (canShareBatches) {
-          await navigator.share({
-            files: batchFiles,
-            title: `${fileBase} photo groups`,
-            text: `${sortedPhotos.length} photos in groups of 50`,
-          });
-          setStatus(`${sortedPhotos.length} photos shared in ${batchFiles.length} PDF groups.`);
-        } else {
-          // Desktop and browsers without multi-file sharing get one download
-          // per group, with a short delay so each download is registered.
-          batchFiles.forEach((file, index) => {
-            setTimeout(() => downloadFile(file.name, file, "application/pdf"), index * 350);
-          });
-          setStatus(`${sortedPhotos.length} photos downloaded in ${batchFiles.length} PDF groups.`);
-        }
+        // A multi-file navigator.share call often fails with "Permission
+        // denied" on phones because PDF generation is asynchronous and the
+        // original tap is no longer an active share gesture. Download each
+        // group instead; users can share the files from Downloads/Files.
+        batchFiles.forEach((file, index) => {
+          setTimeout(() => downloadFile(file.name, file, "application/pdf"), index * 500);
+        });
+        setStatus(`${sortedPhotos.length} photos downloaded in ${batchFiles.length} PDF groups. Open Downloads or Files to share them.`);
         addPhotosToGallery(sortedPhotos);
         return;
       }
