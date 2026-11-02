@@ -1408,7 +1408,25 @@ export default function App() {
       alert("Please add at least one photo first");
       return;
     }
-    
+
+    const defaultFileBase = caseNumber || "PhotoPack";
+    const requestedFileName = window.prompt(
+      "Enter a name for the photo PDF:",
+      defaultFileBase
+    );
+    if (requestedFileName === null) {
+      setStatus("Photo pack save canceled.");
+      return;
+    }
+
+    // Keep the user-entered name safe for downloads and append .pdf below.
+    const fileBase = requestedFileName
+      .trim()
+      .replace(/\.pdf$/i, "")
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+      .replace(/\s+/g, " ")
+      .slice(0, 120) || defaultFileBase;
+
     setIsSharingToOneDrive(true);
     
     try {
@@ -1426,7 +1444,6 @@ export default function App() {
         second: '2-digit',
         hour12: false 
       }).replace(/:/g, '-'); // HH-MM-SS
-      const fileBase = caseNumber || "PhotoPack";
       const pdfFileName = `${fileBase}_${dateStr}_${timeStr}.pdf`;
 
       // Split large exports into groups of 50. This keeps memory usage bounded
