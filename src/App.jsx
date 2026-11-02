@@ -1414,13 +1414,9 @@ export default function App() {
       "Enter a name for the photo PDF:",
       defaultFileBase
     );
-    if (requestedFileName === null) {
-      setStatus("Photo pack save canceled.");
-      return;
-    }
-
-    // Keep the user-entered name safe for downloads and append .pdf below.
-    const fileBase = requestedFileName
+    // Cancel keeps the original save behavior and uses the default filename.
+    // Users can edit the suggested name only when they want to.
+    const fileBase = (requestedFileName === null ? defaultFileBase : requestedFileName)
       .trim()
       .replace(/\.pdf$/i, "")
       .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
