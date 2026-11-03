@@ -2003,7 +2003,7 @@ export default function App() {
                   </div>
                 )}
 
-                <Button className="h-12 w-full" variant="outline" onClick={() => { setPhotos([]); setCaseNumber(""); safeStorage.removeItem(DRAFT_KEY); photoDatabase.clearPhotos(); console.log('[v0] Clear button pressed - photos cleared'); setStatus("Case cleared."); }}>
+                <Button className="h-12 w-full" variant="outline" onClick={() => { setPhotos([]); setCaseNumber(""); setPhotoPackName(""); safeStorage.removeItem(DRAFT_KEY); photoDatabase.clearPhotos(); console.log('[v0] Clear button pressed - photos cleared'); setStatus("Case cleared."); }}>
                   <Trash2 className="mr-2 h-4 w-4" />Clear All
                 </Button>
 
