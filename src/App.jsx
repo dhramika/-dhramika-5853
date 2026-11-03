@@ -506,6 +506,7 @@ export default function App() {
   const [gps, setGps] = useState("");
   const [status, setStatus] = useState("Ready for field use");
   const [photos, setPhotos] = useState([]);
+  const [photoPackName, setPhotoPackName] = useState("");
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [isSharingToOneDrive, setIsSharingToOneDrive] = useState(false);
   const [gallery, setGallery] = useState([]);
@@ -1420,13 +1421,7 @@ export default function App() {
     }
 
     const defaultFileBase = caseNumber || "PhotoPack";
-    const requestedFileName = window.prompt(
-      "Enter a name for the photo PDF:",
-      defaultFileBase
-    );
-    // Cancel keeps the original save behavior and uses the default filename.
-    // Users can edit the suggested name only when they want to.
-    const fileBase = (requestedFileName === null ? defaultFileBase : requestedFileName)
+    const fileBase = (photoPackName || defaultFileBase)
       .trim()
       .replace(/\.pdf$/i, "")
       .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
@@ -1978,6 +1973,19 @@ export default function App() {
                   )}
                 </div>
 
+                {/* Optional filename field keeps the default date/time filename when blank. */}
+                <div className="space-y-2">
+                  <Label htmlFor="photo-pack-name">Photo pack file name (optional)</Label>
+                  <Input
+                    id="photo-pack-name"
+                    value={photoPackName}
+                    onChange={(event) => setPhotoPackName(event.target.value)}
+                    placeholder="Leave blank to use the default date and time"
+                    maxLength={120}
+                    disabled={isSharingToOneDrive}
+                  />
+                </div>
+
                 {/* Save Photo Pack Button - Primary action */}
                 <Button 
                   className={`w-full h-16 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 shadow-lg ${photos.length > 0 && !isSharingToOneDrive ? 'save-button-pulse' : ''}`}
@@ -2023,33 +2031,9 @@ export default function App() {
                     </div>
                     <div className="flex items-start justify-between gap-3 rounded-xl border bg-[#FAF8F2] p-3">
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-[#0B3A5B]">Photo Stamp</div>
-                        <p className="mt-0.5 text-xs text-[#6C7D8A]">
-                          When on, photos are stamped with the officer name, date, time, and GPS location.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={settings.stampEnabled}
-                        aria-label="Toggle photo stamp"
-                        onClick={() => setSettings((prev) => ({ ...prev, stampEnabled: !prev.stampEnabled }))}
-                        className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                          settings.stampEnabled ? "bg-[#0B3A5B]" : "bg-gray-300"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                            settings.stampEnabled ? "translate-x-5" : "translate-x-0.5"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    <div className="flex items-start justify-between gap-3 rounded-xl border bg-[#FAF8F2] p-3">
-                      <div className="flex-1">
                         <div className="text-sm font-medium text-[#0B3A5B]">iPhone Only</div>
                         <p className="mt-0.5 text-xs text-[#6C7D8A]">
-                          Stamp photos only when the app is running on an iPhone.
+                          Apply the photo stamp only when photos are captured on an iPhone.
                         </p>
                       </div>
                       <button
