@@ -1983,7 +1983,7 @@ export default function App() {
                       id="photo-pack-name"
                       value={photoPackName}
                       onChange={(event) => setPhotoPackName(event.target.value)}
-                      className="h-8 text-xs"
+                      className="h-8 border-2 border-[#0B3A5B] text-xs focus-visible:ring-2 focus-visible:ring-[#0B3A5B]"
                     />
                 </div>
 
