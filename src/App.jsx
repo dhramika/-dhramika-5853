@@ -1975,12 +1975,12 @@ export default function App() {
 
                 {/* Optional filename field keeps the default date/time filename when blank. */}
                 <div className="space-y-2">
-                  <Label htmlFor="photo-pack-name">Photo pack file name (optional)</Label>
+                  <Label htmlFor="photo-pack-name" className="text-xs">File name (optional)</Label>
                   <Input
                     id="photo-pack-name"
                     value={photoPackName}
                     onChange={(event) => setPhotoPackName(event.target.value)}
-                    placeholder="Leave blank to use the default date and time"
+                    placeholder="Blank = date/time default"
                     maxLength={120}
                     disabled={isSharingToOneDrive}
                   />
