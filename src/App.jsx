@@ -346,7 +346,13 @@ async function stampImage(src, overlay) {
       ctx.drawImage(img, 0, 0);
 
       // Draw the stamp overlay only when enabled in settings.
-      if (overlay && overlay.stampEnabled) {
+      const isIPhone = /iPhone|iPod/i.test(
+        typeof navigator !== "undefined" ? navigator.userAgent : ""
+      );
+      const shouldStamp = overlay?.stampEnabled &&
+        (!overlay.stampIphoneOnly || isIPhone);
+
+      if (shouldStamp) {
         // Build the lines of text to display, skipping empty values.
         const lines = [];
         if (overlay.officer) lines.push(`Officer: ${overlay.officer}`);
@@ -554,6 +560,7 @@ export default function App() {
     officerDefault: "",
     tenantLabel: "Pasco County Code Compliance",
     stampEnabled: false,
+    stampIphoneOnly: false,
   });
 
   const totals = useMemo(() => ({ photoCount: photos.length }), [photos]);
@@ -1179,6 +1186,7 @@ export default function App() {
       time: meta.time,
       gps: currentGps,
       stampEnabled: settings.stampEnabled,
+      stampIphoneOnly: settings.stampIphoneOnly,
     });
     
     const newPhoto = {
@@ -1246,6 +1254,7 @@ export default function App() {
         time: meta.time,
         gps: currentGps,
         stampEnabled: settings.stampEnabled,
+        stampIphoneOnly: settings.stampIphoneOnly,
       });
       
       const newPhoto = {
@@ -1321,6 +1330,7 @@ export default function App() {
           time: meta.time,
           gps: currentGps,
           stampEnabled: settings.stampEnabled,
+          stampIphoneOnly: settings.stampIphoneOnly,
         });
         
         const newPhoto = {
@@ -2031,6 +2041,30 @@ export default function App() {
                         <span
                           className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
                             settings.stampEnabled ? "translate-x-5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-start justify-between gap-3 rounded-xl border bg-[#FAF8F2] p-3">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-[#0B3A5B]">iPhone Only</div>
+                        <p className="mt-0.5 text-xs text-[#6C7D8A]">
+                          Stamp photos only when the app is running on an iPhone.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={settings.stampIphoneOnly}
+                        aria-label="Toggle iPhone-only photo stamp"
+                        onClick={() => setSettings((prev) => ({ ...prev, stampIphoneOnly: !prev.stampIphoneOnly }))}
+                        className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                          settings.stampIphoneOnly ? "bg-[#0B3A5B]" : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                            settings.stampIphoneOnly ? "translate-x-5" : "translate-x-0.5"
                           }`}
                         />
                       </button>
