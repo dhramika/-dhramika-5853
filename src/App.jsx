@@ -506,6 +506,7 @@ export default function App() {
   const [gps, setGps] = useState("");
   const [status, setStatus] = useState("Ready for field use");
   const [photos, setPhotos] = useState([]);
+  const [photoPackName, setPhotoPackName] = useState("");
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [isSharingToOneDrive, setIsSharingToOneDrive] = useState(false);
   const [gallery, setGallery] = useState([]);
@@ -1420,13 +1421,7 @@ export default function App() {
     }
 
     const defaultFileBase = caseNumber || "PhotoPack";
-    const requestedFileName = window.prompt(
-      "Enter a name for the photo PDF:",
-      defaultFileBase
-    );
-    // Cancel keeps the original save behavior and uses the default filename.
-    // Users can edit the suggested name only when they want to.
-    const fileBase = (requestedFileName === null ? defaultFileBase : requestedFileName)
+    const fileBase = (photoPackName || defaultFileBase)
       .trim()
       .replace(/\.pdf$/i, "")
       .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
@@ -1976,6 +1971,19 @@ export default function App() {
                       </div>
                     ))
                   )}
+                </div>
+
+                {/* Optional filename field keeps the default date/time filename when blank. */}
+                <div className="space-y-2">
+                  <Label htmlFor="photo-pack-name">Photo pack file name (optional)</Label>
+                  <Input
+                    id="photo-pack-name"
+                    value={photoPackName}
+                    onChange={(event) => setPhotoPackName(event.target.value)}
+                    placeholder="Leave blank to use the default date and time"
+                    maxLength={120}
+                    disabled={isSharingToOneDrive}
+                  />
                 </div>
 
                 {/* Save Photo Pack Button - Primary action */}
