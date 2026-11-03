@@ -1981,6 +1981,7 @@ export default function App() {
                     </Label>
                     <Input
                       id="photo-pack-name"
+                      placeholder="Enter new photo pack name"
                       value={photoPackName}
                       onChange={(event) => setPhotoPackName(event.target.value)}
                       className="h-8 border-2 border-[#0B3A5B] text-xs focus-visible:ring-2 focus-visible:ring-[#0B3A5B]"
