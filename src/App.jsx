@@ -2021,54 +2021,6 @@ export default function App() {
                         onChange={(e) => setSettings((prev) => ({ ...prev, officerDefault: e.target.value }))}
                       />
                     </div>
-                    <div className="flex items-start justify-between gap-3 rounded-xl border bg-[#FAF8F2] p-3">
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-[#0B3A5B]">Photo Stamp</div>
-                        <p className="mt-0.5 text-xs text-[#6C7D8A]">
-                          When on, photos are stamped with the officer name, date, time, and GPS location.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={settings.stampEnabled}
-                        aria-label="Toggle photo stamp"
-                        onClick={() => setSettings((prev) => ({ ...prev, stampEnabled: !prev.stampEnabled }))}
-                        className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                          settings.stampEnabled ? "bg-[#0B3A5B]" : "bg-gray-300"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                            settings.stampEnabled ? "translate-x-5" : "translate-x-0.5"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    <div className="flex items-start justify-between gap-3 rounded-xl border bg-[#FAF8F2] p-3">
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-[#0B3A5B]">iPhone Only</div>
-                        <p className="mt-0.5 text-xs text-[#6C7D8A]">
-                          Stamp photos only when the app is running on an iPhone.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={settings.stampIphoneOnly}
-                        aria-label="Toggle iPhone-only photo stamp"
-                        onClick={() => setSettings((prev) => ({ ...prev, stampIphoneOnly: !prev.stampIphoneOnly }))}
-                        className={`relative mt-0.5 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                          settings.stampIphoneOnly ? "bg-[#0B3A5B]" : "bg-gray-300"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                            settings.stampIphoneOnly ? "translate-x-5" : "translate-x-0.5"
-                          }`}
-                        />
-                      </button>
-                    </div>
                     <Button className="w-full" onClick={saveSettings}>
                       <Save className="mr-2 h-4 w-4" />Save Settings
                     </Button>
