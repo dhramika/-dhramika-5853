@@ -323,11 +323,16 @@ const photoDatabase = {
 function downloadFile(name, content, type) {
   const blob = content instanceof Blob ? content : new Blob([content], { type });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Revoke later: Android browsers may not start reading the blob until
+  // after the click handler returns, so immediate revocation can yield a blank.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 async function stampImage(src, overlay) {
@@ -1600,7 +1605,15 @@ export default function App() {
       alert("Please add at least one photo first");
       return;
     }
-    
+
+    // Reserve the tab directly in the tap gesture. Opening it after the
+    // asynchronous PDF build is blocked by mobile browsers and leaves a blank.
+    const pdfTab = window.open("about:blank", "_blank");
+    if (pdfTab) {
+      pdfTab.document.title = "Preparing photo pack";
+      pdfTab.document.body.textContent = "Preparing your PDF…";
+    }
+
     setIsSharingToOneDrive(true);
     
     try {
@@ -1702,38 +1715,21 @@ export default function App() {
         // Gallery save failed, continue
       }
       
-      // Open PDF in new tab - user can then use browser menu to share/save to OneDrive
+      // Load the PDF as a blob URL rather than embedding a large data URI.
       setStatus("Opening PDF...");
-      const pdfDataUri = doc.output("dataurlstring");
-      const newTab = window.open();
-      if (newTab) {
-        newTab.document.write(`
-          <html>
-            <head><title>${pdfFileName}</title></head>
-            <body style="margin:0;padding:0;display:flex;flex-direction:column;height:100vh;">
-              <div style="background:#333;color:white;padding:10px;text-align:center;">
-                <strong>${pdfFileName}</strong><br>
-                <small>Tap the 3-dot menu (top right) → "Share" or "Download" to save to OneDrive</small>
-              </div>
-              <iframe src="${pdfDataUri}" style="flex:1;border:none;width:100%;"></iframe>
-            </body>
-          </html>
-        `);
-        newTab.document.close();
-        setStatus("PDF opened in new tab");
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      if (pdfTab && !pdfTab.closed) {
+        pdfTab.location.replace(pdfUrl);
+        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 10 * 60 * 1000);
+        setStatus("PDF opened. Use the browser share or download controls to save it to OneDrive.");
       } else {
-        // Popup blocked - fallback to direct download
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = pdfUrl;
-        link.download = pdfFileName;
-        link.click();
-        URL.revokeObjectURL(pdfUrl);
-        setStatus("PDF downloaded");
-        alert("PDF saved to Downloads. Open Files app to share to OneDrive.");
+        downloadFile(pdfFileName, pdfBlob, "application/pdf");
+        setStatus("PDF downloaded. Open Downloads to upload it to OneDrive.");
+        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
       }
       
     } catch (error) {
+      if (pdfTab && !pdfTab.closed) pdfTab.close();
       alert("Error: " + (error?.message || "Failed to create PDF"));
       setStatus("Error creating PDF");
     } finally {
